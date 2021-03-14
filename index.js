@@ -14,42 +14,35 @@ const fs=require('fs');
     await page.keyboard.press("Enter");
     
     await autoScroll(page);
-    
-    let allMsg=[];
-    for(let i=5;i<=40;i++)
-    {
-        let msg=await page.evaluate(()=>{
-            let message=document.querySelector(`#main > div._2wjK5 > div > div > div._11liR > div:nth-child(${i}) > div > div > div > div.copyable-text > div > span._3-8er.selectable-text.copyable-text > span`).innerText;
-            let timeDate=document.querySelector(`#main > div._2wjK5 > div > div > div._11liR > div:nth-child(${i}) > div > div > div > div.copyable-text`).dataset.prePlainText;
+
+    const allMsg=await page.evaluate(()=>{
+        let msgArray=[];
+        let msgSelectors=document.querySelectorAll('._1bR5a')
+        for(let i=0;i<msgSelectors.length;i++){
+            let timeDate=msgSelectors[i].firstChild.dataset.prePlainText;
+            let message=msgSelectors[i].firstChild.firstElementChild.firstElementChild.firstElementChild.innerText;
             let arr=timeDate.split(" ");
-    
-            return{
+            let msg={
                 time:arr[0].slice(1)+" "+arr[1].slice(0,-1),
                 date:arr[2].slice(0,-1),
                 sender:arr[3]+" "+arr[4].slice(0,-1),
                 message,
-                
+
             }
-    
-        });
-        allMsg.push(msg);
+            msgArray.push(msg);
+        }
+        return msgArray;
+    })    
 
-    }
-    fs.writeFile(
-        '/message.json',
-        JSON.stringify(allMsg)
-    )
-    
+    fs.writeFile('message.json',JSON.stringify(allMsg),function(err){
+        if(err)
+        throw err;
+        console.log("saved!!");
+    });
 
-    
-    
-    
     await browser.close();
 
 })();
-
-
-
 
 async function autoScroll(page){
     await page.evaluate(() => new Promise((resolve) => {
